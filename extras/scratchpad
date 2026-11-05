@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Scratchpad for niri, built on a hidden workspace.
+
+Needs a niri build with hidden workspaces (github.com/HaseebUllahButt/niri).
+Changes to this script work at once: no log out needed.
+
+Usage:
+  scratchpad hide     send the focused window to the scratchpad
+  scratchpad toggle   show the last hidden window, or hide the focused scratchpad window
+  scratchpad remove   take the focused window out of the scratchpad and tile it
+"""
+
+import json
+import os
+import socket
+import sys
+
+WORKSPACE = "scratchpad"
+STATE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "niri-scratchpad.json")
+
+
+def niri(request):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+        s.connect(os.environ["NIRI_SOCKET"])
+        s.sendall((json.dumps(request) + "\n").encode())
+        reply = b""
+        while not reply.endswith(b"\n"):
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            reply += chunk
+    reply = json.loads(reply)
+    if "Err" in reply:
+        raise RuntimeError(f"niri: {reply['Err']}")
+    return reply["Ok"]
+
+
+def action(name, **args):
+    niri({"Action": {name: args}})
+
+
+def load():
+    try:
+        with open(STATE) as f:
+            return [int(i) for i in json.load(f)]
+    except (OSError, ValueError):
+        return []
+
+
+def save(ids):
+    with open(STATE, "w") as f:
+        json.dump(ids, f)
+
+
+def scratchpad_workspace_id():
+    for ws in niri("WorkspacesWithHidden")["Workspaces"]:
+        if (ws.get("name") or "").lower() == WORKSPACE:
+            return ws["id"]
+    return None
+
+
+def focused_window():
+    return niri("FocusedWindow")["FocusedWindow"]
+
+
+def hide(window_id, ids):
+    ids = [i for i in ids if i != window_id] + [window_id]
+    save(ids)
+    action("MoveWindowToFloating", id=window_id)
+    action(
+        "MoveWindowToWorkspace",
+        window_id=window_id,
+        reference={"Name": WORKSPACE},
+        focus=False,
+    )
+
+
+def show(window_id, workspace_id):
+    action(
+        "MoveWindowToWorkspace",
+        window_id=window_id,
+        reference={"Id": workspace_id},
+        focus=True,
+    )
+    action("MoveWindowToFloating", id=window_id)
+    # Fill the working area (bars and sidebars stay visible). The window floats on top,
+    # so tiled windows below do not move.
+    action("SetWindowWidth", id=window_id, change={"SetProportion": 100.0})
+    action("SetWindowHeight", id=window_id, change={"SetProportion": 100.0})
+    action("FocusWindow", id=window_id)
+    action("MoveFloatingWindow", id=window_id, x={"SetFixed": 0.0}, y={"SetFixed": 0.0})
+
+
+def main():
+    command = sys.argv[1] if len(sys.argv) > 1 else "toggle"
+    if scratchpad_workspace_id() is None:
+        sys.exit(f'scratchpad: add `workspace "{WORKSPACE}" {{ hidden true; }}` to the niri config')
+
+    scratch = scratchpad_workspace_id()
+    windows = {w["id"]: w for w in niri("Windows")["Windows"]}
+    ids = [i for i in load() if i in windows]
+    # Windows on the hidden workspace belong to the scratchpad even if the list lost them.
+    ids = [w for w in windows if windows[w]["workspace_id"] == scratch and w not in ids] + ids
+    focused = focused_window()
+
+    if command == "hide":
+        if focused:
+            hide(focused["id"], ids)
+        return
+
+    if command == "remove":
+        if focused and focused["id"] in ids:
+            save([i for i in ids if i != focused["id"]])
+            action("MoveWindowToTiling", id=focused["id"])
+            action("FocusWindow", id=focused["id"])
+        return
+
+    # toggle
+    if focused and focused["id"] in ids:
+        hide(focused["id"], ids)
+        return
+
+    active = next(
+        (ws["id"] for ws in niri("Workspaces")["Workspaces"] if ws["is_focused"]), None
+    )
+    if active is None:
+        return
+
+    hidden = [i for i in ids if windows[i]["workspace_id"] == scratch]
+    elsewhere = [i for i in ids if windows[i]["workspace_id"] not in (scratch, active)]
+    pick = (hidden or elsewhere or [None])[-1]
+    if pick is None:
+        if ids:
+            action("FocusWindow", id=ids[-1])
+        save(ids)
+        return
+
+    save(ids)
+    show(pick, active)
+
+
+if __name__ == "__main__":
+    main()

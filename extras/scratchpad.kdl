@@ -1,0 +1,12 @@
+// Scratchpad: windows live on a hidden workspace.
+// Needs niri with hidden workspaces (github.com/HaseebUllahButt/niri).
+// The behavior is in ../scripts/scratchpad, so changes there work at once.
+workspace "scratchpad" {
+    hidden true
+}
+
+binds {
+    Mod+Z       hotkey-overlay-title="Show or Hide Scratchpad"       { spawn "/home/haseeb/.config/niri/scripts/scratchpad" "toggle"; }
+    Mod+Shift+Z hotkey-overlay-title="Send Window to Scratchpad"     { spawn "/home/haseeb/.config/niri/scripts/scratchpad" "hide"; }
+    Mod+Ctrl+Z  hotkey-overlay-title="Take Window out of Scratchpad" { spawn "/home/haseeb/.config/niri/scripts/scratchpad" "remove"; }
+}
