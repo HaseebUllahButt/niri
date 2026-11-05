@@ -8,7 +8,7 @@
 
 use niri_config::workspace::WorkspaceName;
 use niri_config::{Action, Workspace as WorkspaceConfig, WorkspaceReference};
-use niri_ipc::SizeChange;
+use niri_ipc::{PositionChange, SizeChange};
 
 use crate::niri::State;
 
@@ -155,6 +155,27 @@ impl State {
         self.do_action(Action::SetWindowWidthById { id, change: size }, false);
         self.do_action(Action::SetWindowHeightById { id, change: size }, false);
         self.do_action(Action::FocusWindow(id), false);
-        self.do_action(Action::CenterWindowById(id), false);
+        // Pin it to the top-left corner. Centering would use the old size, because the window
+        // has not resized yet.
+        self.do_action(
+            Action::MoveFloatingWindowById {
+                id: Some(id),
+                x: PositionChange::SetFixed(0.),
+                y: PositionChange::SetFixed(0.),
+            },
+            false,
+        );
+    }
+
+    /// Takes a window out of the scratchpad and tiles it on its current workspace.
+    pub fn scratchpad_remove(&mut self, id: u64) {
+        let len = self.niri.scratchpad_windows.len();
+        self.niri.scratchpad_windows.retain(|&w| w != id);
+        if self.niri.scratchpad_windows.len() == len {
+            return;
+        }
+
+        self.do_action(Action::MoveWindowToTilingById(id), false);
+        self.do_action(Action::FocusWindow(id), false);
     }
 }

@@ -461,6 +461,7 @@ fn action_name(action: &Action) -> String {
         Action::ShowHotkeyOverlay => String::from("Show Important Hotkeys"),
         Action::MoveWindowToScratchpad => String::from("Move Window to Scratchpad"),
         Action::ToggleScratchpad => String::from("Show or Hide Scratchpad"),
+        Action::RemoveWindowFromScratchpad => String::from("Take Window out of Scratchpad"),
         Action::CloseWindow => String::from("Close Focused Window"),
         Action::FocusColumnLeft => String::from("Focus Column to the Left"),
         Action::FocusColumnRight => String::from("Focus Column to the Right"),

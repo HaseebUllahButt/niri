@@ -2419,6 +2419,11 @@ impl State {
             Action::ToggleScratchpad => {
                 self.scratchpad_toggle();
             }
+            Action::RemoveWindowFromScratchpad => {
+                if let Some(id) = self.niri.layout.focus().map(|m| m.id().get()) {
+                    self.scratchpad_remove(id);
+                }
+            }
             Action::ToggleWorkspaceVisibility(workspace_name) => {
                 self.niri.layout.toggle_workspace_visibility(workspace_name);
             }

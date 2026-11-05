@@ -779,6 +779,8 @@ pub enum Action {
     MoveWindowToScratchpad {},
     /// Show the last hidden scratchpad window, or hide the focused scratchpad window.
     ToggleScratchpad {},
+    /// Take the focused window out of the scratchpad and tile it on the current workspace.
+    RemoveWindowFromScratchpad {},
     /// Move the focused workspace to the monitor to the left.
     MoveWorkspaceToMonitorLeft {},
     /// Move the focused workspace to the monitor to the right.
