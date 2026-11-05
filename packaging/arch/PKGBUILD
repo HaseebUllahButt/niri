@@ -1,14 +1,14 @@
 # Package niri with the hidden-workspace scratchpad from this fork.
 # Build niri first with `cargo build --release` in the repo root, then run `makepkg -si` here.
 pkgname=niri-scratchpad
-pkgver=26.04
+pkgver=26.04.r2846.g052a82a2
 pkgrel=1
 pkgdesc="niri with hidden workspaces and a built-in scratchpad"
 arch=(x86_64)
 url="https://github.com/HaseebUllahButt/niri"
 license=(GPL-3.0-or-later)
 depends=(cairo glib2 glibc libdisplay-info libgcc libinput libpipewire libxkbcommon mesa pango pixman seatd systemd-libs xdg-desktop-portal-impl)
-provides=(niri wayland-compositor)
+provides=("niri=26.04" wayland-compositor)
 conflicts=(niri)
 options=(!debug !strip)
 
