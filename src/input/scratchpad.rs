@@ -2,7 +2,8 @@
 //!
 //! Windows in the scratchpad live on a hidden named workspace. They do not show in the
 //! overview, in bars, or when you scroll through workspaces. `toggle-scratchpad` brings the
-//! most recently hidden window to the current workspace as a centered floating window, and
+//! most recently hidden window to the current workspace as a floating window that fills the
+//! screen, and
 //! hides it again when it is focused.
 
 use niri_config::workspace::WorkspaceName;
@@ -14,8 +15,8 @@ use crate::niri::State;
 /// Name of the hidden workspace that holds scratchpad windows.
 pub const SCRATCHPAD_WORKSPACE: &str = "scratchpad";
 
-/// Size of a tiled window when it first goes to the scratchpad, as a percent of the screen.
-const SCRATCHPAD_SIZE_PERCENT: f64 = 70.;
+/// Size of a shown scratchpad window, as a percent of the screen working area.
+const SCRATCHPAD_SIZE_PERCENT: f64 = 100.;
 
 fn is_scratchpad_name(name: &str) -> bool {
     name.eq_ignore_ascii_case(SCRATCHPAD_WORKSPACE)
@@ -89,19 +90,8 @@ impl State {
         self.niri.scratchpad_windows.retain(|&w| w != id);
         self.niri.scratchpad_windows.push(id);
 
-        // Make it floating first, so it comes back as a floating window. A tiled window gets a
-        // comfortable floating size; a window that is already floating keeps its size.
-        let was_floating = self.niri.layout.workspaces().any(|(_, _, ws)| {
-            ws.windows()
-                .find(|m| m.id().get() == id)
-                .is_some_and(|m| ws.is_floating(&m.window))
-        });
+        // Make it floating first, so it comes back as a floating window.
         self.do_action(Action::MoveWindowToFloatingById(id), false);
-        if !was_floating {
-            let size = SizeChange::SetProportion(SCRATCHPAD_SIZE_PERCENT);
-            self.do_action(Action::SetWindowWidthById { id, change: size }, false);
-            self.do_action(Action::SetWindowHeightById { id, change: size }, false);
-        }
         self.do_action(
             Action::MoveWindowToWorkspaceById {
                 window_id: id,
@@ -160,6 +150,10 @@ impl State {
             false,
         );
         self.do_action(Action::MoveWindowToFloatingById(id), false);
+        // Fill the screen every time the window comes back.
+        let size = SizeChange::SetProportion(SCRATCHPAD_SIZE_PERCENT);
+        self.do_action(Action::SetWindowWidthById { id, change: size }, false);
+        self.do_action(Action::SetWindowHeightById { id, change: size }, false);
         self.do_action(Action::FocusWindow(id), false);
         self.do_action(Action::CenterWindowById(id), false);
     }
