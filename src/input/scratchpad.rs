@@ -7,11 +7,15 @@
 
 use niri_config::workspace::WorkspaceName;
 use niri_config::{Action, Workspace as WorkspaceConfig, WorkspaceReference};
+use niri_ipc::SizeChange;
 
 use crate::niri::State;
 
 /// Name of the hidden workspace that holds scratchpad windows.
 pub const SCRATCHPAD_WORKSPACE: &str = "scratchpad";
+
+/// Size of a tiled window when it first goes to the scratchpad, as a percent of the screen.
+const SCRATCHPAD_SIZE_PERCENT: f64 = 70.;
 
 fn is_scratchpad_name(name: &str) -> bool {
     name.eq_ignore_ascii_case(SCRATCHPAD_WORKSPACE)
@@ -85,8 +89,19 @@ impl State {
         self.niri.scratchpad_windows.retain(|&w| w != id);
         self.niri.scratchpad_windows.push(id);
 
-        // Make it floating first, so it comes back as a floating window.
+        // Make it floating first, so it comes back as a floating window. A tiled window gets a
+        // comfortable floating size; a window that is already floating keeps its size.
+        let was_floating = self.niri.layout.workspaces().any(|(_, _, ws)| {
+            ws.windows()
+                .find(|m| m.id().get() == id)
+                .is_some_and(|m| ws.is_floating(&m.window))
+        });
         self.do_action(Action::MoveWindowToFloatingById(id), false);
+        if !was_floating {
+            let size = SizeChange::SetProportion(SCRATCHPAD_SIZE_PERCENT);
+            self.do_action(Action::SetWindowWidthById { id, change: size }, false);
+            self.do_action(Action::SetWindowHeightById { id, change: size }, false);
+        }
         self.do_action(
             Action::MoveWindowToWorkspaceById {
                 window_id: id,
