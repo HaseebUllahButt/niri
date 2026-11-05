@@ -1,3 +1,15 @@
+> **This fork** adds hidden workspaces ([niri PR #2997](https://github.com/niri-wm/niri/pull/2997)) and a built-in scratchpad.
+>
+> ```kdl
+> binds {
+>     Mod+Grave       { toggle-scratchpad; }          // show the last hidden window, or hide the focused one
+>     Mod+Shift+Grave { move-window-to-scratchpad; }  // send the focused window to the scratchpad
+> }
+> ```
+>
+> Scratchpad windows live on a hidden workspace named `scratchpad`. It does not show in the overview, in bars, or when you scroll.
+> On Arch: run `cargo build --release`, then `makepkg -si` in `packaging/arch`.
+
 <h1 align="center"><img alt="niri" src="https://github.com/user-attachments/assets/07d05cd0-d5dc-4a28-9a35-51bae8f119a0"></h1>
 <p align="center">A scrollable-tiling Wayland compositor.</p>
 <p align="center">
