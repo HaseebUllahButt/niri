@@ -390,6 +390,9 @@ pub struct Niri {
     pub hotkey_overlay: HotkeyOverlay,
     pub exit_confirm_dialog: ExitConfirmDialog,
 
+    /// Ids of windows in the scratchpad, oldest first.
+    pub scratchpad_windows: Vec<u64>,
+
     pub window_mru_ui: WindowMruUi,
     pub pending_mru_commit: Option<PendingMruCommit>,
 
@@ -2601,6 +2604,8 @@ impl Niri {
             config_error_notification,
             hotkey_overlay,
             exit_confirm_dialog,
+
+            scratchpad_windows: Vec::new(),
 
             window_mru_ui,
             pending_mru_commit: None,

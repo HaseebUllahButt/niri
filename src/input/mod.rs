@@ -60,6 +60,7 @@ pub mod move_grab;
 pub mod pick_color_grab;
 pub mod pick_window_grab;
 pub mod resize_grab;
+pub mod scratchpad;
 pub mod scroll_swipe_gesture;
 pub mod scroll_tracker;
 pub mod spatial_movement_grab;
@@ -2409,6 +2410,14 @@ impl State {
                     self.niri.window_mru_ui.cycle_scope();
                     self.niri.queue_redraw_mru_output();
                 }
+            }
+            Action::MoveWindowToScratchpad => {
+                if let Some(id) = self.niri.layout.focus().map(|m| m.id().get()) {
+                    self.scratchpad_hide(id);
+                }
+            }
+            Action::ToggleScratchpad => {
+                self.scratchpad_toggle();
             }
             Action::ToggleWorkspaceVisibility(workspace_name) => {
                 self.niri.layout.toggle_workspace_visibility(workspace_name);

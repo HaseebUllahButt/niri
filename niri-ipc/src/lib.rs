@@ -775,6 +775,10 @@ pub enum Action {
     },
     /// Show the hotkey overlay.
     ShowHotkeyOverlay {},
+    /// Move the focused window to the hidden scratchpad.
+    MoveWindowToScratchpad {},
+    /// Show the last hidden scratchpad window, or hide the focused scratchpad window.
+    ToggleScratchpad {},
     /// Move the focused workspace to the monitor to the left.
     MoveWorkspaceToMonitorLeft {},
     /// Move the focused workspace to the monitor to the right.
